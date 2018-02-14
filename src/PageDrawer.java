@@ -131,8 +131,9 @@ public class PageDrawer extends PDFStreamEngine
     
     public void drawPage( Graphics g, PDPage p, Dimension pageDimension ) throws IOException
     {
-        graphics = (Graphics2D)g;
+
         page = p;
+        graphics = (Graphics2D)g;
         
         List<PDAnnotation> annotations = page.getAnnotations();
 		//System.out.println("annotations : "+annotations.size());

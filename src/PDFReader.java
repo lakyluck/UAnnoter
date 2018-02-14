@@ -1,6 +1,5 @@
 
 import java.awt.BorderLayout;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -15,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -26,6 +24,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 
@@ -35,7 +34,9 @@ import org.apache.pdfbox.pdfviewer.ReaderBottomPanel;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageable;
+import org.apache.pdfbox.pdmodel.graphics.color.PDGamma;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationTextMarkup;
 import org.apache.pdfbox.util.ExtensionFileFilter;
 import org.apache.pdfbox.util.ImageIOUtil;
 //import org.apache.pdfbox.pdfviewer.PageWrapper;
@@ -85,6 +86,7 @@ public class PDFReader extends JFrame implements callback {
 	private String DST;
 	private PageWrapper wrapper = null;
 	private JMenu outils = new JMenu("Outils");
+	private JMenu couleurs = new JMenu("Couleurs");
 	private annotation annoter = null;
 	private PDPage pageToshow = null;
 	private callback call = this;
@@ -92,6 +94,10 @@ public class PDFReader extends JFrame implements callback {
 	private JToolBar toolbar = null;
 	private JToolBar toolbar2 = null;
 	private List<PDAnnotation> annotationsDelete = null;
+	private PDGamma couleur = null; 
+	private boolean bool = true;
+	List<PDAnnotation> annSP = null;
+	PDDocument documentRefresh = null;
 	
   public PDFReader(String SRC,String DST)
   {
@@ -233,14 +239,13 @@ public class PDFReader extends JFrame implements callback {
     menuBar.add(viewMenu);
     
     
-    
     ImageIcon img = new ImageIcon("surligneur.png");
     Image imgi = img.getImage();
     Image scaledImage = imgi.getScaledInstance(50,50,Image.SCALE_SMOOTH);
     img.setImage(scaledImage);
     outils.add(new JMenuItem("Surligneur" , img)).addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
-			annoter = new annotationSurligner(SRC,DST,pageToshow,currentPage,call);
+			annoter = new annotationSurligner(SRC,DST,pageToshow,currentPage,call,couleur);
 			showPage(currentPage);
 			setfile();
 
@@ -254,7 +259,7 @@ public class PDFReader extends JFrame implements callback {
     img.setImage(scaledImage);
     outils.add(new JMenuItem("Squigly",img)).addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
-			annoter = new annotationSquigly(SRC,DST,pageToshow,currentPage,call);
+			annoter = new annotationSquigly(SRC,DST,pageToshow,currentPage,call,couleur);
 			showPage(currentPage);
 			setfile();
          }
@@ -266,7 +271,7 @@ public class PDFReader extends JFrame implements callback {
     img.setImage(scaledImage);
     outils.add(new JMenuItem("Ligne",img)).addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
-			annoter = new annotationLigne(SRC,DST,pageToshow,currentPage,call);
+			annoter = new annotationLigne(SRC,DST,pageToshow,currentPage,call,couleur);
 			showPage(currentPage);
 			setfile();
          }
@@ -286,6 +291,27 @@ public class PDFReader extends JFrame implements callback {
     */
     
     menuBar.add(outils);
+    
+
+    couleurs.add(new JMenuItem("Bleu")).addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+        	couleur = new PDGamma();couleur.setB(1);
+        	if(annoter != null) annoter.setCouleur(couleur);
+        }
+     });
+    couleurs.add(new JMenuItem("Rouge")).addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+        	couleur = new PDGamma();couleur.setR(1);
+        	if(annoter != null) annoter.setCouleur(couleur);
+        }
+     });
+    couleurs.add(new JMenuItem("Vert")).addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+        	couleur = new PDGamma();couleur.setG(1);
+        	if(annoter != null) annoter.setCouleur(couleur);
+        }
+     });
+    menuBar.add(couleurs);
     setJMenuBar(menuBar);
     
     JPanel pane = new JPanel();
@@ -371,7 +397,7 @@ public class PDFReader extends JFrame implements callback {
 			    setVisible(false);		    
 			    dispose();
 		}else {
-			int n = JOptionPane.showConfirmDialog(this,"Voulez vous enregistrer ?","An Inane Question",JOptionPane.YES_NO_OPTION);
+			int n = JOptionPane.showConfirmDialog(this,"Voulez vous enregistrer ?","Message",JOptionPane.YES_NO_OPTION);
 			if(n == 1){
 			    try{
 			      if (document != null){
@@ -434,7 +460,7 @@ public class PDFReader extends JFrame implements callback {
 	SRC = tmpdir+"/"+tab[0]+"_result."+tab[1];
 	DST = tmpdir+"/"+tab[0]+"_tmp."+tab[1];
 	try {
-		PDDocument doc = PDDocument.loadNonSeq(new File(filename), null);
+		PDDocument doc = PDDocument.load(new File(filename), null);
 		doc.save(SRC);
 		doc.save(DST);
 		doc.close();
@@ -442,7 +468,8 @@ public class PDFReader extends JFrame implements callback {
 		System.out.println("ERROR 0 : "+e.getMessage());
 	}
     
-    File file = new File(filename);
+    //File file = new File(filename);
+	File file = new File(SRC);
     parseDocument(file, password);
     pages = document.getDocumentCatalog().getAllPages();
     numberOfPages = pages.size();
@@ -459,17 +486,20 @@ public class PDFReader extends JFrame implements callback {
     try{
     	
     	pageToshow = pages.get(currentPage);
+    	annotationsDelete = pageToshow.getAnnotations();
     	wrapper = new PageWrapper(this,annoter);
     	wrapper.displayPage((PDPage)pages.get(pageNumber));
     	if (documentPanel.getComponentCount() > 0){
     		documentPanel.remove(0);
+    		//documentPanel.removeAll();
     	}
     	documentPanel.add(wrapper.getPanel());
     	pack();
     	refreshToolbar();
     }
     catch (IOException exception) {
-      exception.printStackTrace();
+    	System.out.println("ERROR : "+exception.getMessage());
+      //exception.printStackTrace();
     }
     
   }
@@ -477,14 +507,14 @@ public class PDFReader extends JFrame implements callback {
   
   
   public void refreshToolbar(){
-	  
+
 	  toolbar.removeAll();
 	  toolbar2.removeAll();
 	  
 	  try {
-		  	PDDocument doc = PDDocument.load(SRC);
-		  	PDPage pa = (PDPage) doc.getDocumentCatalog().getAllPages().get(currentPage);
-			annotationsDelete = pa.getAnnotations();
+		  	//PDDocument doc = PDDocument.load(SRC);
+		  	//PDPage pa = (PDPage) doc.getDocumentCatalog().getAllPages().get(currentPage);
+			//annotationsDelete = pa.getAnnotations();
 			for( int i = 0 ; i<annotationsDelete.size(); i++ ){
 	            final PDAnnotation annot = (PDAnnotation)annotationsDelete.get( i );
 	            String image = "";
@@ -494,7 +524,8 @@ public class PDFReader extends JFrame implements callback {
 	            	image = "Squigly.png";
 	            }else if(annot.getSubtype().equals("Underline")){
 	            	image = "Ligne.png";
-	            }
+	            }else
+	            	image = "Inconu.png";
 	            
 	    	    ImageIcon img = new ImageIcon();
 	    	    img.setImage(new ImageIcon(image).getImage().getScaledInstance(30,30,Image.SCALE_SMOOTH));
@@ -543,16 +574,16 @@ public class PDFReader extends JFrame implements callback {
 		  	PDDocument doc = PDDocument.load(SRC);
 			PDPage pa = (PDPage) doc.getDocumentCatalog().getAllPages().get(currentPage);
 		
-			System.out.println(ann.getSubtype());
-			System.out.println(annotationsDelete.contains(ann));
-			System.out.println(annotationsDelete.indexOf(ann));
+			//System.out.println(ann.getSubtype());
+			//System.out.println(annotationsDelete.contains(ann));
+			//System.out.println(annotationsDelete.indexOf(ann));
 			annotationsDelete.remove(annotationsDelete.indexOf(ann));
 			pa.setAnnotations(annotationsDelete);
 			
 			doc.save(new File(DST));
 			doc.close();
 			refresh();
-			setRefreshToolbar();
+			showPage(currentPage);
 		
 		}catch(Exception e){
 			System.out.println("ERROR : "+e.getMessage());			
@@ -639,10 +670,10 @@ public class PDFReader extends JFrame implements callback {
 	public void refresh(){		
 		try {
 			//System.out.println("refresh");
-			PDDocument doc = PDDocument.loadNonSeq(new File(DST), null);
-			doc.save(SRC);
-			
-			PDPage pa = (PDPage) doc.getDocumentCatalog().getAllPages().get(currentPage);
+			documentRefresh = PDDocument.loadNonSeq(new File(DST), null);
+			documentRefresh.save(SRC);
+			pages = documentRefresh.getDocumentCatalog().getAllPages();
+			PDPage pa = (PDPage) documentRefresh.getDocumentCatalog().getAllPages().get(currentPage);
 			wrapper.getPagePanel().setPage(pa);
 			wrapper.getPanel().paint(wrapper.getPanel().getGraphics());
 			
@@ -651,10 +682,46 @@ public class PDFReader extends JFrame implements callback {
 		}
 	}
 
-	public void setRefreshToolbar(){
+	public void setRefreshToolbar(){		
 		showPage(currentPage);
 		setfile();
+		if(bool){
+			JTextArea msg = new JTextArea();
+			msg.setLineWrap(true);
+			msg.setWrapStyleWord(true);
+			msg.setPreferredSize(new Dimension(400, 100));
+			JScrollPane scrollPane = new JScrollPane(msg);
+			int n = JOptionPane.showConfirmDialog(this,scrollPane,"Text annotation",JOptionPane.YES_NO_OPTION);
+		
+			if(n == 1){
+				
+			}else if(n == 0){
+				System.out.println(msg.getText());
+				insererTextAnnotation(msg.getText());
+			}
+		}
+		
 	}
+	
+	
+	public void insererTextAnnotation(String s){
+		try {
+		  	PDDocument doc = PDDocument.load(SRC);
+			PDPage pa = (PDPage) doc.getDocumentCatalog().getAllPages().get(currentPage);
+		
+			List<PDAnnotation> annts = pa.getAnnotations();
+			PDAnnotationTextMarkup ann = (PDAnnotationTextMarkup) annts.get(annts.size()-1);
+			ann.setContents(s);
+			
+			doc.save(new File(DST));
+			doc.close();
+			refresh();
+		
+		}catch(Exception e){
+			System.out.println("ERROR : "+e.getMessage());			
+		}
+	}
+	
 	
 }
 

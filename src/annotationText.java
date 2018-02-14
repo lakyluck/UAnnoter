@@ -22,8 +22,8 @@ public class annotationText extends annotation{
 
 	
 	
-	public annotationText(String SRC, String DST,PDPage page,int pageToAnnote, callback callback) {
-		super( SRC,  DST, page, pageToAnnote,  callback);
+	public annotationText(String SRC, String DST,PDPage page,int pageToAnnote, callback callback,PDGamma couleur) {
+		super( SRC,  DST, page, pageToAnnote,  callback,couleur);
 		/*
 		this.callback = callback;
 		this.pageToAnnote = pageToAnnote;

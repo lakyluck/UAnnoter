@@ -22,8 +22,8 @@ public class annotationLigne extends annotation{
 
 	
 	
-	public annotationLigne(String SRC, String DST,PDPage page,int pageToAnnote, callback callback) {
-		super( SRC,  DST, page, pageToAnnote,  callback);
+	public annotationLigne(String SRC, String DST,PDPage page,int pageToAnnote, callback callback,PDGamma couleur) {
+		super( SRC,  DST, page, pageToAnnote,  callback,couleur);
 		/*
 		this.callback = callback;
 		this.pageToAnnote = pageToAnnote;
@@ -172,9 +172,11 @@ public class annotationLigne extends annotation{
 		      txtMark.setQuadPoints(quads);
 		      txtMark.setContents("Highlighted since it's important");
 		      
-		      PDGamma colour = new PDGamma();
-		      colour.setR(1);
-		      txtMark.setColour(colour);
+		      if(couleur == null){
+		    	  couleur = new PDGamma();
+		    	  couleur.setB(1);
+		      }
+		      txtMark.setColour(couleur);
 		      annotations.add(txtMark);
 		      
 		      try {

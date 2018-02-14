@@ -1,19 +1,14 @@
+import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.util.List;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.common.PDStream;
 import org.apache.pdfbox.pdmodel.graphics.color.PDGamma;
-import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObjectForm;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationTextMarkup;
-import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceDictionary;
-import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 
 
 public class annotationSurligner extends annotation{
@@ -21,15 +16,12 @@ public class annotationSurligner extends annotation{
 	private String annotation = "annotationSurligner";
 
 	private int annot;
-	
-	
 	private float x = 0;
 	private float y = 0;
-
 	
 	
-	public annotationSurligner(String SRC, String DST,PDPage page,int pageToAnnote, callback callback) {
-		super( SRC,  DST, page, pageToAnnote,  callback);
+	public annotationSurligner(String SRC, String DST,PDPage page,int pageToAnnote, callback callback,PDGamma couleur) {
+		super( SRC,  DST, page, pageToAnnote, callback,couleur);
 		/*
 		this.callback = callback;
 		this.pageToAnnote = pageToAnnote;
@@ -178,10 +170,12 @@ public class annotationSurligner extends annotation{
 		      txtMark.setQuadPoints(quads);
 		      txtMark.setContents("Highlighted since it's important");
 		      
-		      PDGamma colour = new PDGamma();
-		      colour.setR(1);
-		      colour.setG(1);
-		      txtMark.setColour(colour);
+		      if(couleur == null){
+		    	  couleur = new PDGamma();
+		    	  couleur.setR(1);
+		    	  couleur.setG(1);
+		      }
+		      txtMark.setColour(couleur);
 		      annotations.add(txtMark);
 		      
 		      try {

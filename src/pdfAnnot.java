@@ -28,12 +28,13 @@ public class pdfAnnot {
 		
 		//monViewer reader = new monViewer(SRC,DST);
 		PDFReader reader = new PDFReader(SRC,DST);
+		/*
 		try {
 			reader.openPDFFile(filename, "");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+		*/
 		//reader.setCurrentFile(filename);
 		//reader.showPage(0);
 		reader.setVisible(true);

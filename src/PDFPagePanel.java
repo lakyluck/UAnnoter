@@ -91,10 +91,8 @@ public class PDFPagePanel extends JPanel implements MouseMotionListener, MouseLi
     @Override
     public void paint(Graphics g )
     {
+    	removeAll();
     	graphics = g;
-    	
-
-    	
         try
         {
             g.setColor( getBackground() );

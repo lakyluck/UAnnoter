@@ -136,10 +136,10 @@ public class monViewer extends PDFReader implements callback {
 			annotation annoter = null;
 			switch (selectedTool) {
 			case 1:
-				annoter = new annotationSurligner(SRC,DST,pageToshow,i,this);
+				annoter = new annotationSurligner(SRC,DST,pageToshow,i,this,null);
 				break;
 			case 2:
-				annoter = new annotationSquigly(SRC,DST,pageToshow,i,this);
+				annoter = new annotationSquigly(SRC,DST,pageToshow,i,this,null);
 				break;
 
 
